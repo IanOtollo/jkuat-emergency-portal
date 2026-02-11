@@ -19,9 +19,9 @@ cd ..
 # Install Backend Dependencies
 echo "Installing Backend Dependencies..."
 cd backend
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 
 # Create Static Files
 echo "Preparing Backend..."
-python manage.py collectstatic --no-input
+python3 manage.py collectstatic --no-input
 cd ..
