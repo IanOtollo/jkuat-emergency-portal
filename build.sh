@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# exit on error
+set -o errexit
+
+# Install Frontend Dependencies and Build
+echo "Building Frontend..."
+cd frontend
+npm install --legacy-peer-deps
+npm run build
+cd ..
+
+# Install Backend Dependencies
+echo "Installing Backend Dependencies..."
+cd backend
+pip install -r requirements.txt
+
+# Create Static Files and Run Migrations
+echo "Preparing Backend..."
+python manage.py collectstatic --no-input
+python manage.py migrate
+python manage.py seed_data
+cd ..
