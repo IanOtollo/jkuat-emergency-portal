@@ -5,7 +5,7 @@
         "buildCommand": "bash build.sh"
     },
     "deploy": {
-        "startCommand": "python backend/manage.py migrate && python backend/manage.py seed_data && gunicorn --pythonpath backend incident_system.wsgi",
+        "startCommand": "python backend/manage.py migrate && python backend/manage.py seed_data && gunicorn --pythonpath backend --bind 0.0.0.0:$PORT --timeout 600 incident_system.wsgi",
         "restartPolicyType": "ON_FAILURE"
     }
 }
