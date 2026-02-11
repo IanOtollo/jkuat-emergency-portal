@@ -10,7 +10,9 @@ rm -rf backend/staticfiles
 # Install Frontend Dependencies and Build
 echo "Building Frontend..."
 cd frontend
-npm install --legacy-peer-deps
+# Set memory limit for Node/Vite to avoid OOM
+export NODE_OPTIONS="--max-old-space-size=512"
+npm install --legacy-peer-deps --no-audit --no-fund
 npm run build
 cd ..
 
