@@ -25,7 +25,16 @@ SECRET_KEY = 'django-insecure-g+nah763&rs#hw07yutj9e165+933tnoh8!4bh@ccko*2a6kcl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'jkuat-emergency-portal.up.railway.app',
+    'localhost',
+    '127.0.0.1',
+    '.railway.app',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://jkuat-emergency-portal.up.railway.app',
+]
 
 
 # Application definition
