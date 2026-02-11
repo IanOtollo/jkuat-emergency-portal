@@ -2,6 +2,11 @@
 # exit on error
 set -o errexit
 
+# Clean previous builds
+echo "Cleaning old builds..."
+rm -rf frontend/dist
+rm -rf backend/staticfiles
+
 # Install Frontend Dependencies and Build
 echo "Building Frontend..."
 cd frontend
