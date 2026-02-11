@@ -19,9 +19,7 @@ echo "Installing Backend Dependencies..."
 cd backend
 pip install -r requirements.txt
 
-# Create Static Files and Run Migrations
+# Create Static Files
 echo "Preparing Backend..."
 python manage.py collectstatic --no-input
-python manage.py migrate
-python manage.py seed_data
 cd ..
