@@ -23,4 +23,5 @@ pip install -r requirements.txt
 echo "Preparing Backend..."
 python manage.py collectstatic --no-input
 python manage.py migrate
+python manage.py seed_data
 cd ..

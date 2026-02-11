@@ -67,41 +67,9 @@ class Command(BaseCommand):
                 guards.append(guard)
                 self.stdout.write(self.style.SUCCESS(f'Created guard: {guard.full_name}'))
         
-        # Create sample incidents
-        if Incident.objects.count() == 0:
-            incident_types = ['theft', 'suspicious', 'vandalism', 'facility', 'noise']
-            locations = [
-                'Main Library', 'Student Hostels Block A', 'Computer Lab Building',
-                'Engineering Workshop', 'Sports Complex', 'Main Gate',
-                'Cafeteria', 'Lecture Hall 3', 'Admin Block'
-            ]
-            
-            statuses = ['pending', 'assigned', 'in_progress', 'resolved']
-            severities = ['low', 'medium', 'high']
-            
-            for i in range(20):
-                incident_type = random.choice(incident_types)
-                created_date = datetime.now() - timedelta(days=random.randint(0, 30))
-                
-                incident = Incident.objects.create(
-                    incident_type=incident_type,
-                    title=f'Sample {incident_type} incident #{i+1}',
-                    description=f'This is a sample incident for testing purposes. Incident type: {incident_type}',
-                    location_building=random.choice(locations),
-                    location_floor=f'Floor {random.randint(1, 5)}',
-                    status=random.choice(statuses),
-                    severity=random.choice(severities),
-                    reported_by=supervisor if i % 3 == 0 else random.choice(guards) if guards else None,
-                    assigned_to=random.choice(guards) if guards and i % 2 == 0 else None,
-                )
-                incident.created_at = created_date
-                incident.save()
-                
-                if incident.status == 'resolved':
-                    incident.resolved_at = created_date + timedelta(hours=random.randint(1, 48))
-                    incident.save()
-            
-            self.stdout.write(self.style.SUCCESS(f'Created 20 sample incidents'))
+        # Create sample incidents (Skipped for clean production setup)
+        # if Incident.objects.count() == 0:
+        #     ...
         
         self.stdout.write(self.style.SUCCESS('Database seeding completed!'))
         self.stdout.write('\nLogin credentials:')
