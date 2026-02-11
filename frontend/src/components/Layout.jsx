@@ -53,6 +53,31 @@ export default function Layout({ children }) {
                 </Link>
               </li>
             )}
+            <li style={{ marginTop: 'auto' }}>
+              <a
+                href="tel:0793824968"
+                className="emergency-link"
+                style={{
+                  color: '#ef4444',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 15px',
+                  borderRadius: '8px',
+                  border: '1px solid #fee2e2',
+                  backgroundColor: '#fef2f2'
+                }}
+              >
+                <div style={{ padding: '8px', backgroundColor: '#ef4444', borderRadius: '50%', color: 'white' }}>
+                  <LogOut size={16} style={{ transform: 'rotate(-90deg)' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '10px', textTransform: 'uppercase' }}>Emergency Call</div>
+                  <div style={{ fontSize: '14px' }}>0793824968</div>
+                </div>
+              </a>
+            </li>
           </ul>
         </nav>
 

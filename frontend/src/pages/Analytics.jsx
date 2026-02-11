@@ -7,27 +7,36 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function Analytics() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading: isStatsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: () => incidentsAPI.dashboardStats().then(res => res.data),
   });
 
-  if (isLoading) {
+  const { data: advanced, isLoading: isAdvancedLoading } = useQuery({
+    queryKey: ['advanced-analytics'],
+    queryFn: () => incidentsAPI.advancedAnalytics().then(res => res.data),
+  });
+
+  if (isStatsLoading || isAdvancedLoading) {
     return (
       <Layout>
-        <div className="loading">Loading analytics...</div>
+        <div className="loading">Loading detailed security reports...</div>
       </Layout>
     );
   }
 
   const typeData = Object.entries(stats?.by_type || {}).map(([name, value]) => ({ name, value }));
-  const severityData = Object.entries(stats?.by_severity || {}).map(([name, value]) => ({ name, value }));
+  const hourData = (advanced?.by_hour || []).map(item => ({
+    name: `${item.hour}:00`,
+    count: item.count
+  }));
+  const locationData = (advanced?.by_location || []).slice(0, 5); // Top 5 locations
 
   return (
     <Layout>
       <div className="page-header">
-        <h1>Analytics & Reports</h1>
-        <p style={{ color: '#64748b' }}>Insights from incident data</p>
+        <h1>Detailed Security Analysis</h1>
+        <p style={{ color: '#64748b' }}>Frequency patterns and location hotspots at JKUAT</p>
       </div>
 
       <div className="stats-grid">
@@ -36,55 +45,80 @@ export default function Analytics() {
           <div className="value">{stats?.total || 0}</div>
         </div>
         <div className="stat-card">
-          <h3>Pending</h3>
-          <div className="value" style={{ color: '#f59e0b' }}>{stats?.pending || 0}</div>
+          <h3>High Severity</h3>
+          <div className="value" style={{ color: '#ef4444' }}>
+            {Object.entries(stats?.by_severity || {}).find(([k]) => k === 'high')?.[1] || 0}
+          </div>
         </div>
         <div className="stat-card">
-          <h3>In Progress</h3>
-          <div className="value" style={{ color: '#3b82f6' }}>{stats?.in_progress || 0}</div>
+          <h3>Most Common Type</h3>
+          <div className="value" style={{ fontSize: '1.2rem', color: '#3b82f6' }}>
+            {typeData.sort((a, b) => b.value - a.value)[0]?.name || 'N/A'}
+          </div>
         </div>
         <div className="stat-card">
-          <h3>Resolved</h3>
-          <div className="value" style={{ color: '#10b981' }}>{stats?.resolved || 0}</div>
+          <h3>Primary Hotspot</h3>
+          <div className="value" style={{ fontSize: '1.2rem', color: '#8b5cf6' }}>
+            {locationData[0]?.location || 'N/A'}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginBottom: '20px' }}>
+        <div className="card">
+          <h2>Incident Frequency by Time (24h)</h2>
+          <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>
+            Analysis of when security breaches are most likely to occur.
+          </p>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={hourData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" fontSize={12} />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         <div className="card">
-          <h2>Incidents by Type</h2>
+          <h2>Location Distribution</h2>
+          <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>
+            Top incident hotspots on campus.
+          </p>
           <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={typeData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {typeData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
+            <BarChart data={locationData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+              <XAxis type="number" allowDecimals={false} />
+              <YAxis dataKey="location" type="category" width={100} fontSize={12} />
               <Tooltip />
-            </PieChart>
+              <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="card">
-          <h2>Incidents by Severity</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={severityData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
+          <h2>State of Security Summary</h2>
+          <div style={{ padding: '10px 0' }}>
+            <div className="security-summary-item" style={{ marginBottom: '15px' }}>
+              <strong style={{ display: 'block', fontSize: '14px' }}>Temporal Analysis:</strong>
+              <p style={{ fontSize: '13px', margin: '5px 0' }}>
+                {stats?.total > 0
+                  ? "Based on current data, monitoring should be prioritized during peak frequency hours shown above."
+                  : "No temporal patterns detected yet. Awaiting more reported incidents for analysis."}
+              </p>
+            </div>
+            <div className="security-summary-item">
+              <strong style={{ display: 'block', fontSize: '14px' }}>Spatial Hotspots:</strong>
+              <p style={{ fontSize: '13px', margin: '5px 0' }}>
+                {locationData.length > 0
+                  ? `High frequency of reports observed in ${locationData[0].location}. Strategic patrol deployment recommended.`
+                  : "Scanning for geographical clusters... No hotspots identified yet."}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

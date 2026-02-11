@@ -167,6 +167,32 @@ class IncidentViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
+    def advanced_analytics(self, request):
+        """Get detailed analytics for security analysis"""
+        user = request.user
+        if user.role == 'guard':
+            incidents = Incident.objects.filter(Q(assigned_to=user) | Q(reported_by=user))
+        else:
+            incidents = Incident.objects.all()
+
+        # Frequency by hour of day (0-23)
+        # Using __hour lookup on created_at
+        by_hour = incidents.values('created_at__hour').annotate(count=Count('id')).order_by('created_at__hour')
+        
+        # Convert to list of 24 hours
+        hour_stats = {h: 0 for h in range(24)}
+        for entry in by_hour:
+            hour_stats[entry['created_at__hour']] = entry['count']
+        
+        # Group by Location Building
+        by_location = incidents.values('location_building').annotate(count=Count('id')).order_by('-count')
+
+        return Response({
+            'by_hour': [{'hour': k, 'count': v} for k, v in hour_stats.items()],
+            'by_location': [{'location': entry['location_building'], 'count': entry['count']} for entry in by_location],
+        })
+
+    @action(detail=False, methods=['get'])
     def dashboard_stats(self, request):
         """Get dashboard statistics"""
         user = request.user

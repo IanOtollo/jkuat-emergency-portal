@@ -77,6 +77,7 @@ export const incidentsAPI = {
   }),
   myIncidents: () => apiClient.get('/incidents/my_incidents/'),
   dashboardStats: () => apiClient.get('/incidents/dashboard_stats/'),
+  advancedAnalytics: () => apiClient.get('/incidents/advanced_analytics/'),
 };
 
 // Users API
