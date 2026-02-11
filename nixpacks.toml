@@ -1,0 +1,6 @@
+[phases.setup]
+nixPkgs = ["python311", "nodejs"]
+
+[phases.build]
+dependsOn = ["setup"]
+cmds = ["bash build.sh"]
