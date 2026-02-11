@@ -1,6 +1,9 @@
 [phases.setup]
-nixPkgs = ["python311", "nodejs"]
+nixPkgs = ["python311", "nodejs_18"]
 
 [phases.build]
 dependsOn = ["setup"]
 cmds = ["bash build.sh"]
+
+[start]
+cmd = "python backend/manage.py migrate && python backend/manage.py seed_data && gunicorn --pythonpath backend --bind 0.0.0.0:$PORT --timeout 600 incident_system.wsgi"

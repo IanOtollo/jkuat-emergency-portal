@@ -1,0 +1,10 @@
+{
+    "name": "jkuat-portal-root",
+    "private": true,
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "scripts": {
+        "build": "bash build.sh"
+    }
+}
