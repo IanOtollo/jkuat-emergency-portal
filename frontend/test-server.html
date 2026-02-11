@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Server Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        h1 { color: #333; margin-top: 0; }
+        .success { color: #10b981; font-weight: bold; }
+        .error { color: #ef4444; font-weight: bold; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        button:hover { background: #2563eb; }
+        #result { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>🔧 JKUAT Server Test</h1>
+        <p>This tests if the dev server is working.</p>
+        
+        <button onclick="testServer()">Test Server</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function testServer() {
+            const result = document.getElementById('result');
+            result.innerHTML = '<p>Testing...</p>';
+            
+            // Test if we can access the page itself
+            result.innerHTML = `
+                <p class="success">✅ HTML Server is Working!</p>
+                <p>The Vite dev server is responding.</p>
+                <hr>
+                <h3>Next Steps:</h3>
+                <ol>
+                    <li>Open browser console (F12)</li>
+                    <li>Look for JavaScript errors</li>
+                    <li>Check if main.jsx is loading</li>
+                </ol>
+                <p><strong>If you see this page, the server works.</strong></p>
+                <p>The problem is with React/JavaScript loading.</p>
+            `;
+        }
+        
+        // Auto-test on load
+        window.onload = testServer;
+    </script>
+</body>
+</html>
