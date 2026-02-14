@@ -30,8 +30,8 @@ class IncidentViewSet(viewsets.ModelViewSet):
         queryset = Incident.objects.all()
         user = self.request.user
         
-        # Guards only see incidents assigned to them or reported by them
-        if user.role == 'guard':
+        # Only supervisors, heads, and admins see all incidents
+        if user.role not in ['supervisor', 'head', 'admin']:
             queryset = queryset.filter(
                 Q(assigned_to=user) | Q(reported_by=user)
             )
@@ -170,10 +170,10 @@ class IncidentViewSet(viewsets.ModelViewSet):
     def advanced_analytics(self, request):
         """Get detailed analytics for security analysis"""
         user = request.user
-        if user.role == 'guard':
-            incidents = Incident.objects.filter(Q(assigned_to=user) | Q(reported_by=user))
-        else:
+        if user.role in ['supervisor', 'head', 'admin']:
             incidents = Incident.objects.all()
+        else:
+            incidents = Incident.objects.filter(Q(assigned_to=user) | Q(reported_by=user))
 
         # Frequency by hour of day (0-23)
         # Using __hour lookup on created_at
@@ -197,10 +197,10 @@ class IncidentViewSet(viewsets.ModelViewSet):
         """Get dashboard statistics"""
         user = request.user
         
-        if user.role == 'guard':
-            incidents = Incident.objects.filter(Q(assigned_to=user) | Q(reported_by=user))
-        else:
+        if user.role in ['supervisor', 'head', 'admin']:
             incidents = Incident.objects.all()
+        else:
+            incidents = Incident.objects.filter(Q(assigned_to=user) | Q(reported_by=user))
         
         stats = {
             'total': incidents.count(),
