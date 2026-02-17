@@ -14,7 +14,24 @@ export default function Layout({ children }) {
 
   return (
     <div className="app-container">
-      <aside className="sidebar">
+      {/* Mobile Hamburger Button */}
+      <button
+        className="mobile-menu-toggle"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle menu"
+      >
+        {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Sidebar Overlay for Mobile */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <h1>JKUAT Emergency Incident Management System</h1>
           <div style={{ fontSize: '13px', color: '#ecf0f1', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
