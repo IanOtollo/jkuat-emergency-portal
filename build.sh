@@ -20,21 +20,18 @@ cd ..
 echo "Installing Backend Dependencies..."
 cd backend
 if command -v python3 &> /dev/null; then
-    PYTHON_CMD=python3
+    PYTHON_SYSTEM_CMD=python3
 else
-    PYTHON_CMD=python
+    PYTHON_SYSTEM_CMD=python
 fi
 
-# Detect pip command
-if command -v pip3 &> /dev/null; then
-    PIP_CMD="pip3"
-elif command -v pip &> /dev/null; then
-    PIP_CMD="pip"
-else
-    PIP_CMD="$PYTHON_CMD -m pip"
-fi
+echo "Creating virtual environment..."
+$PYTHON_SYSTEM_CMD -m venv venv
+PYTHON_CMD="./venv/bin/python"
+PIP_CMD="./venv/bin/pip"
 
 echo "Using $PYTHON_CMD and $PIP_CMD"
+$PIP_CMD install --upgrade pip
 $PIP_CMD install -r requirements.txt
 
 # Create Static Files
