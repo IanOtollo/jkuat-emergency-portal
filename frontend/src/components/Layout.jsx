@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, FileText, Plus, BarChart, LogOut, User } from 'lucide-react';
+import { Home, FileText, Plus, BarChart, LogOut, User, Menu, X } from 'lucide-react';
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isActive = (path) => location.pathname === path ? 'active' : '';
 
