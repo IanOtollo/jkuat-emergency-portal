@@ -8,8 +8,11 @@ import { Upload, MessageSquare } from 'lucide-react';
 export default function IncidentDetail() {
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [note, setNote] = useState('');
+  const [resolutionNote, setResolutionNote] = useState('');
   const [editMode, setEditMode] = useState(false);
+  const [showCloseModal, setShowCloseModal] = useState(false);
   const [editData, setEditData] = useState({});
 
   const { data: incident, isLoading } = useQuery({
@@ -20,6 +23,7 @@ export default function IncidentDetail() {
   const { data: guards } = useQuery({
     queryKey: ['guards'],
     queryFn: () => usersAPI.guards().then(res => res.data),
+    enabled: ['supervisor', 'head', 'admin'].includes(user?.role),
   });
 
   const updateMutation = useMutation({
@@ -27,6 +31,23 @@ export default function IncidentDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries(['incident', id]);
       setEditMode(false);
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: (officerId) => incidentsAPI.assign(id, officerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['incident', id]);
+      setEditMode(false);
+    },
+  });
+
+  const closeMutation = useMutation({
+    mutationFn: (note) => incidentsAPI.close(id, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['incident', id]);
+      setShowCloseModal(false);
+      setResolutionNote('');
     },
   });
 
@@ -47,7 +68,15 @@ export default function IncidentDetail() {
 
   const handleUpdate = (e) => {
     e.preventDefault();
+    if (editData.assigned_to !== incident.assigned_to?.id) {
+      assignMutation.mutate(editData.assigned_to);
+    }
     updateMutation.mutate(editData);
+  };
+
+  const handleClose = (e) => {
+    e.preventDefault();
+    closeMutation.mutate(resolutionNote);
   };
 
   const handleAddNote = (e) => {
@@ -89,20 +118,58 @@ export default function IncidentDetail() {
           <h1>Incident Details</h1>
           <p style={{ color: '#64748b' }}>{incident.reference_number}</p>
         </div>
-        <button
-          className="btn btn-secondary"
-          onClick={() => {
-            setEditMode(!editMode);
-            setEditData({
-              status: incident.status,
-              severity: incident.severity,
-              assigned_to: incident.assigned_to?.id || '',
-            });
-          }}
-        >
-          {editMode ? 'Cancel Edit' : 'Edit Incident'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {incident.status !== 'closed' && (incident.assigned_to?.id === user?.id || ['supervisor', 'head', 'admin'].includes(user?.role)) && (
+            <button
+              className="btn btn-danger"
+              onClick={() => setShowCloseModal(true)}
+            >
+              Close Incident
+            </button>
+          )}
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              setEditMode(!editMode);
+              setEditData({
+                status: incident.status,
+                severity: incident.severity,
+                assigned_to: incident.assigned_to?.id || '',
+              });
+            }}
+          >
+            {editMode ? 'Cancel Edit' : 'Edit Incident'}
+          </button>
+        </div>
       </div>
+
+      {showCloseModal && (
+        <div className="modal-overlay">
+          <div className="modal-content card">
+            <h2>Close Incident</h2>
+            <p>Please provide a resolution note before closing this incident.</p>
+            <form onSubmit={handleClose}>
+              <div className="form-group">
+                <textarea
+                  required
+                  value={resolutionNote}
+                  onChange={(e) => setResolutionNote(e.target.value)}
+                  placeholder="Describe how the incident was resolved..."
+                  style={{ minHeight: '120px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowCloseModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-danger" disabled={closeMutation.isPending}>
+                  {closeMutation.isPending ? 'Closing...' : 'Close Permanently'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {editMode ? (
         <div className="card">
@@ -172,6 +239,12 @@ export default function IncidentDetail() {
                 <p><strong>Assigned To:</strong> {incident.assigned_to_details?.full_name || 'Unassigned'}</p>
               </div>
             </div>
+            {incident.status === 'closed' && incident.resolution_note && (
+              <div style={{ marginTop: '20px', padding: '15px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px' }}>
+                <p style={{ color: '#166534', fontWeight: 'bold', marginBottom: '5px' }}>Resolution Note:</p>
+                <p style={{ color: '#14532d' }}>{incident.resolution_note}</p>
+              </div>
+            )}
             <div style={{ marginTop: '20px' }}>
               <p><strong>Description:</strong></p>
               <p>{incident.description}</p>
@@ -179,6 +252,7 @@ export default function IncidentDetail() {
             <div style={{ marginTop: '20px', fontSize: '12px', color: '#64748b' }}>
               <p>Created: {new Date(incident.created_at).toLocaleString()}</p>
               {incident.resolved_at && <p>Resolved: {new Date(incident.resolved_at).toLocaleString()}</p>}
+              {incident.closed_at && <p>Closed: {new Date(incident.closed_at).toLocaleString()}</p>}
               {incident.response_time && <p>Response Time: {incident.response_time} hours</p>}
             </div>
           </div>

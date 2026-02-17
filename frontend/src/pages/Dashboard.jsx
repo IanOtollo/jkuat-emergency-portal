@@ -1,11 +1,9 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
-import { incidentsAPI } from '../api/client';
-import Layout from '../components/Layout';
-import { AlertCircle, CheckCircle, Clock, FileText } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { AlertCircle, CheckCircle, Clock, FileText, User, Shield, Activity } from 'lucide-react';
 
 export default function Dashboard() {
+  const { user } = useAuth();
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: () => incidentsAPI.dashboardStats().then(res => res.data),
@@ -19,16 +17,34 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="loading">Loading dashboard...</div>
+        <div className="loading">Loading your workspace...</div>
       </Layout>
     );
   }
 
+  const getGreeting = () => {
+    const roleMap = {
+      'guard': 'Officer',
+      'supervisor': 'Supervisor',
+      'head': 'Chief',
+      'admin': 'Administrator'
+    };
+    return `Welcome back, ${roleMap[user?.role] || 'User'} ${user?.full_name?.split(' ')[0]}`;
+  };
+
+  const getSubtext = () => {
+    if (user?.role === 'guard') return 'Focus on your assigned tasks and active patrols.';
+    if (['supervisor', 'head'].includes(user?.role)) return 'Campus-wide security overview and rapid response monitoring.';
+    return 'System-wide monitoring and administrative oversight.';
+  };
+
   return (
     <Layout>
       <div className="page-header">
-        <h1>Dashboard</h1>
-        <p style={{ color: '#64748b' }}>Overview of security incidents</p>
+        <div>
+          <h1>{getGreeting()}</h1>
+          <p style={{ color: '#64748b' }}>{getSubtext()}</p>
+        </div>
       </div>
 
       <div className="stats-grid">
@@ -58,7 +74,9 @@ export default function Dashboard() {
       </div>
 
       <div className="card">
-        <h2 style={{ marginBottom: '20px' }}>Recent Incidents</h2>
+        <h2 style={{ marginBottom: '20px' }}>
+          {user?.role === 'guard' ? 'My Recent Assignments' : 'Recent Campus Incidents'}
+        </h2>
         {recentIncidents && recentIncidents.length > 0 ? (
           <table className="table">
             <thead>

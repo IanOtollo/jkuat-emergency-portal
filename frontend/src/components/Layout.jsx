@@ -10,6 +10,7 @@ export default function Layout({ children }) {
   const isActive = (path) => location.pathname === path ? 'active' : '';
 
   const canAccessAnalytics = ['supervisor', 'head', 'admin'].includes(user?.role);
+  const canAccessUsers = user?.role === 'admin';
 
   return (
     <div className="app-container">
@@ -50,6 +51,17 @@ export default function Layout({ children }) {
                 <Link to="/analytics" className={isActive('/analytics')}>
                   <BarChart size={18} />
                   Analytics
+                </Link>
+              </li>
+            )}
+            {canAccessUsers && (
+              <li>
+                <div style={{ padding: '10px 15px', fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '10px' }}>
+                  Administration
+                </div>
+                <Link to="/users" className={isActive('/users')}>
+                  <User size={18} />
+                  User Management
                 </Link>
               </li>
             )}

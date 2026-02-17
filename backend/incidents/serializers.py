@@ -86,7 +86,15 @@ class PublicReportSerializer(serializers.ModelSerializer):
                   'location_building', 'location_floor', 'reporter_name', 
                   'reporter_email', 'reporter_phone', 'is_anonymous', 
                   'status', 'created_at']
-        read_only_fields = ['id', 'reference_number', 'status', 'created_at']
+    def validate_description(self, value):
+        if len(value) < 10:
+            raise serializers.ValidationError("Description must be at least 10 characters long.")
+        return value
+
+    def validate_reporter_email(self, value):
+        if value and not serializers.EmailField().run_validators(value):
+            raise serializers.ValidationError("Invalid email format.")
+        return value
 
 
 class PublicReportStatusSerializer(serializers.ModelSerializer):

@@ -61,6 +61,7 @@ export default apiClient;
 // Auth API
 export const authAPI = {
   login: (credentials) => apiClient.post('/auth/login/', credentials),
+  logout: (refreshToken) => apiClient.post('/auth/logout/', { refresh: refreshToken }),
   getCurrentUser: () => apiClient.get('/users/me/'),
 };
 
@@ -75,6 +76,8 @@ export const incidentsAPI = {
   uploadEvidence: (id, formData) => apiClient.post(`/incidents/${id}/upload_evidence/`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+  assign: (id, officerId) => apiClient.post(`/incidents/${id}/assign/`, { officer_id: officerId }),
+  close: (id, resolutionNote) => apiClient.post(`/incidents/${id}/close/`, { resolution_note: resolutionNote }),
   myIncidents: () => apiClient.get('/incidents/my_incidents/'),
   dashboardStats: () => apiClient.get('/incidents/dashboard_stats/'),
   advancedAnalytics: () => apiClient.get('/incidents/advanced_analytics/'),

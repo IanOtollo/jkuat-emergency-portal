@@ -23,5 +23,7 @@ python3 -m pip install -r requirements.txt
 
 # Create Static Files
 echo "Preparing Backend..."
+# We are already in the backend directory from the previous step
 python3 manage.py collectstatic --no-input
+# We run migrations in the start command, but we can verify here if needed
 cd ..

@@ -29,7 +29,7 @@ class Incident(models.Model):
     ]
     
     reference_number = models.CharField(max_length=20, unique=True, editable=False)
-    incident_type = models.CharField(max_length=50, choices=INCIDENT_TYPES)
+    incident_type = models.CharField(max_length=50, choices=INCIDENT_TYPES, db_index=True)
     title = models.CharField(max_length=200)
     description = models.TextField()
     location_building = models.CharField(max_length=100)
@@ -38,8 +38,8 @@ class Incident(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='medium')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='medium', db_index=True)
     
     reported_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='reported_incidents')
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_incidents')
@@ -50,7 +50,7 @@ class Incident(models.Model):
     reporter_phone = models.CharField(max_length=20, blank=True)
     is_anonymous = models.BooleanField(default=False)
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
     
@@ -114,10 +114,11 @@ class AuditLog(models.Model):
     ]
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    action = models.CharField(max_length=20, choices=ACTION_TYPES)
-    entity_type = models.CharField(max_length=50)
+    action = models.CharField(max_length=20, choices=ACTION_TYPES, db_index=True)
+    entity_type = models.CharField(max_length=50, db_index=True)
     entity_id = models.IntegerField(null=True, blank=True)
     description = models.TextField()
+    changes = models.JSONField(null=True, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

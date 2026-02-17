@@ -9,7 +9,10 @@ export default function Incidents() {
   const [filters, setFilters] = useState({
     status: '',
     type: '',
+    severity: '',
     search: '',
+    start_date: '',
+    end_date: '',
   });
 
   const { data, isLoading } = useQuery({
@@ -17,7 +20,8 @@ export default function Incidents() {
     queryFn: () => incidentsAPI.list(filters).then(res => res.data),
   });
 
-  const incidents = data?.results || [];
+  const incidents = data?.results || data || [];
+  const totalCount = data?.count || (Array.isArray(data) ? data.length : 0);
 
   return (
     <Layout>
@@ -29,12 +33,12 @@ export default function Incidents() {
       </div>
 
       <div className="card">
-        <div className="filters">
-          <div style={{ flex: 1, position: 'relative' }}>
+        <div className="filters" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+          <div style={{ flex: '1 1 300px', position: 'relative' }}>
             <Search size={18} style={{ position: 'absolute', left: '10px', top: '12px', color: '#9ca3af' }} />
             <input
               type="text"
-              placeholder="Search incidents..."
+              placeholder="Search reference, title, description..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
               style={{ paddingLeft: '40px' }}
@@ -50,6 +54,13 @@ export default function Incidents() {
             <option value="closed">Closed</option>
           </select>
 
+          <select value={filters.severity} onChange={(e) => setFilters({ ...filters, severity: e.target.value })}>
+            <option value="">All Severities</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+
           <select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })}>
             <option value="">All Types</option>
             <option value="theft">Theft</option>
@@ -60,6 +71,26 @@ export default function Incidents() {
             <option value="facility">Facility Issue</option>
             <option value="other">Other</option>
           </select>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <label style={{ fontSize: '12px', color: '#64748b' }}>From:</label>
+            <input
+              type="date"
+              value={filters.start_date}
+              onChange={(e) => setFilters({ ...filters, start_date: e.target.value })}
+              style={{ width: 'auto' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <label style={{ fontSize: '12px', color: '#64748b' }}>To:</label>
+            <input
+              type="date"
+              value={filters.end_date}
+              onChange={(e) => setFilters({ ...filters, end_date: e.target.value })}
+              style={{ width: 'auto' }}
+            />
+          </div>
         </div>
 
         {isLoading ? (

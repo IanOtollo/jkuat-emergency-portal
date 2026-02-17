@@ -2,8 +2,10 @@ from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Avg, F, ExpressionWrapper, fields
 from django.utils import timezone
+from datetime import timedelta
+from users.permissions import IsAdminUser, IsSupervisorUser, IsHeadOfSecurity, IsSecurityGuard
 from .models import Incident, IncidentNote, Evidence, AuditLog, PublicReport
 from .serializers import (
     IncidentListSerializer, IncidentDetailSerializer, 
@@ -16,6 +18,11 @@ from .serializers import (
 
 class IncidentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.action in ['advanced_analytics', 'dashboard_stats']:
+            return [IsSupervisorUser()]
+        return [permissions.IsAuthenticated()]
     
     def get_serializer_class(self):
         if self.action == 'list':
@@ -39,13 +46,18 @@ class IncidentViewSet(viewsets.ModelViewSet):
         # Filter by query params
         status_filter = self.request.query_params.get('status', None)
         incident_type = self.request.query_params.get('type', None)
+        severity = self.request.query_params.get('severity', None)
         assigned_to = self.request.query_params.get('assigned_to', None)
         search = self.request.query_params.get('search', None)
+        start_date = self.request.query_params.get('start_date', None)
+        end_date = self.request.query_params.get('end_date', None)
         
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         if incident_type:
             queryset = queryset.filter(incident_type=incident_type)
+        if severity:
+            queryset = queryset.filter(severity=severity)
         if assigned_to:
             queryset = queryset.filter(assigned_to_id=assigned_to)
         if search:
@@ -54,8 +66,76 @@ class IncidentViewSet(viewsets.ModelViewSet):
                 Q(title__icontains=search) |
                 Q(description__icontains=search)
             )
-        
+        if start_date:
+            queryset = queryset.filter(created_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(created_at__date__lte=end_date)
+            
         return queryset.select_related('reported_by', 'assigned_to')
+
+    @action(detail=True, methods=['post'], permission_classes=[IsSupervisorUser])
+    def assign(self, request, pk=None):
+        """Dedicated action to assign an officer to an incident"""
+        incident = self.get_object()
+        officer_id = request.data.get('officer_id')
+        
+        if not officer_id:
+            return Response({'error': 'officer_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            officer = User.objects.get(id=officer_id)
+        except User.DoesNotExist:
+            return Response({'error': 'Officer not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        incident.assigned_to = officer
+        incident.status = 'assigned'
+        incident.save()
+        
+        # Log assignment
+        AuditLog.objects.create(
+            user=request.user,
+            action='assign',
+            entity_type='incident',
+            entity_id=incident.id,
+            description=f'Assigned incident {incident.reference_number} to {officer.full_name}'
+        )
+        
+        return Response(IncidentDetailSerializer(incident).data)
+
+    @action(detail=True, methods=['post'])
+    def close(self, request, pk=None):
+        """Dedicated action to close an incident"""
+        incident = self.get_object()
+        note_text = request.data.get('resolution_note', 'Incident closed.')
+        
+        # Check permissions: Assigned officer or Supervisor+
+        user = request.user
+        if incident.assigned_to != user and user.role not in ['supervisor', 'head', 'admin']:
+             return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+             
+        incident.status = 'closed'
+        incident.resolved_at = timezone.now()
+        incident.save()
+        
+        # Add a final note
+        IncidentNote.objects.create(
+            incident=incident,
+            user=user,
+            note=f"RESOLUTION: {note_text}"
+        )
+        
+        # Log closure
+        AuditLog.objects.create(
+            user=user,
+            action='status_change',
+            entity_type='incident',
+            entity_id=incident.id,
+            description=f'Closed incident {incident.reference_number}'
+        )
+        
+        return Response(IncidentDetailSerializer(incident).data)
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -162,24 +242,36 @@ class IncidentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def my_incidents(self, request):
         """Get incidents assigned to current user"""
-        incidents = Incident.objects.filter(assigned_to=request.user)
+        incidents = Incident.objects.filter(assigned_to=request.user).select_related('reported_by', 'assigned_to')
         serializer = IncidentListSerializer(incidents, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def advanced_analytics(self, request):
         """Get detailed analytics for security analysis"""
+        from django.core.cache import cache
+        cache_key = f"analytics_{request.user.id}_{request.user.role}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data)
+
         user = request.user
         if user.role in ['supervisor', 'head', 'admin']:
             incidents = Incident.objects.all()
         else:
             incidents = Incident.objects.filter(Q(assigned_to=user) | Q(reported_by=user))
 
+        # Trends - Last 30 days
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        trends = incidents.filter(created_at__gte=thirty_days_ago)\
+            .extra(select={'date': "DATE(created_at)"})\
+            .values('date')\
+            .annotate(count=Count('id'))\
+            .order_by('date')
+
         # Frequency by hour of day (0-23)
-        # Using __hour lookup on created_at
         by_hour = incidents.values('created_at__hour').annotate(count=Count('id')).order_by('created_at__hour')
-        
-        # Convert to list of 24 hours
         hour_stats = {h: 0 for h in range(24)}
         for entry in by_hour:
             hour_stats[entry['created_at__hour']] = entry['count']
@@ -187,10 +279,33 @@ class IncidentViewSet(viewsets.ModelViewSet):
         # Group by Location Building
         by_location = incidents.values('location_building').annotate(count=Count('id')).order_by('-count')
 
-        return Response({
+        # Severity distribution
+        by_severity = incidents.values('severity').annotate(count=Count('id'))
+
+        # Resolution Time (Avg in hours)
+        resolved_incidents = incidents.filter(status__in=['resolved', 'closed'], resolved_at__isnull=False)
+        duration_expr = ExpressionWrapper(
+            F('resolved_at') - F('created_at'),
+            output_field=fields.DurationField()
+        )
+        avg_resolution = resolved_incidents.annotate(duration=duration_expr).aggregate(Avg('duration'))['duration__avg']
+        
+        avg_res_hours = 0
+        if avg_resolution:
+            avg_res_hours = round(avg_resolution.total_seconds() / 3600, 1)
+
+        result = {
+            'trends': list(trends),
             'by_hour': [{'hour': k, 'count': v} for k, v in hour_stats.items()],
             'by_location': [{'location': entry['location_building'], 'count': entry['count']} for entry in by_location],
-        })
+            'by_severity': {entry['severity']: entry['count'] for entry in by_severity},
+            'avg_resolution_hours': avg_res_hours,
+            'resolved_count': resolved_incidents.count()
+        }
+        
+        # Cache for 5 minutes
+        cache.set(cache_key, result, 300)
+        return Response(result)
 
     @action(detail=False, methods=['get'])
     def dashboard_stats(self, request):
@@ -242,6 +357,14 @@ def public_report_submit(request):
         report.incident = incident
         report.save()
         
+        # Log public submission
+        AuditLog.objects.create(
+            action='create',
+            entity_type='public_report',
+            entity_id=report.id,
+            description=f'Anonymous public report submitted: {report.reference_number}'
+        )
+        
         return Response({
             'reference_number': report.reference_number,
             'message': 'Report submitted successfully'
@@ -265,7 +388,7 @@ def public_report_status(request, reference_number):
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.all()
     serializer_class = AuditLogSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsSupervisorUser]
     
     def get_queryset(self):
         # Only supervisors and above can view audit logs

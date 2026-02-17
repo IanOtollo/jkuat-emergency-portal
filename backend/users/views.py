@@ -1,11 +1,14 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from .models import User
 from .serializers import UserSerializer, UserCreateSerializer, UserDetailSerializer
+from .permissions import IsAdminUser, IsSupervisorUser, IsHeadOfSecurity, IsSecurityGuard
 from incidents.models import AuditLog
 
 User = get_user_model()
@@ -38,9 +41,28 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAdminUser()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return [permissions.IsAuthenticated()]
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -69,13 +91,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     def create(self, request, *args, **kwargs):
-        # Only admins can create users
-        if request.user.role != 'admin':
-            return Response(
-                {'error': 'Only administrators can create users'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
         response = super().create(request, *args, **kwargs)
         
         # Log user creation

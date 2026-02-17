@@ -1,11 +1,9 @@
-import { useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { incidentsAPI, usersAPI } from '../api/client';
-import Layout from '../components/Layout';
+import { useAuth } from '../context/AuthContext';
 
 export default function CreateIncident() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     incident_type: 'theft',
     title: '',
@@ -17,9 +15,12 @@ export default function CreateIncident() {
     assigned_to: '',
   });
 
+  const canAssign = ['supervisor', 'head', 'admin'].includes(user?.role);
+
   const { data: guards } = useQuery({
     queryKey: ['guards'],
     queryFn: () => usersAPI.guards().then(res => res.data),
+    enabled: canAssign,
   });
 
   const createMutation = useMutation({
@@ -27,10 +28,14 @@ export default function CreateIncident() {
     onSuccess: (response) => {
       navigate(`/incidents/${response.data.id}`);
     },
+    onError: (err) => {
+      setError(err.response?.data?.detail || 'Failed to create incident. Please check your inputs.');
+    }
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError('');
     createMutation.mutate(formData);
   };
 
@@ -41,6 +46,7 @@ export default function CreateIncident() {
       </div>
 
       <div className="card">
+        {error && <div className="error-message" style={{ marginBottom: '20px' }}>{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Incident Type *</label>
@@ -123,20 +129,22 @@ export default function CreateIncident() {
             </select>
           </div>
 
-          <div className="form-group">
-            <label>Assign To</label>
-            <select
-              value={formData.assigned_to}
-              onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
-            >
-              <option value="">Unassigned</option>
-              {guards?.map((guard) => (
-                <option key={guard.id} value={guard.id}>
-                  {guard.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {canAssign && (
+            <div className="form-group">
+              <label>Assign To</label>
+              <select
+                value={formData.assigned_to}
+                onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
+              >
+                <option value="">Unassigned</option>
+                {guards?.map((guard) => (
+                  <option key={guard.id} value={guard.id}>
+                    {guard.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: '10px' }}>
             <button type="submit" className="btn btn-primary" disabled={createMutation.isPending}>
