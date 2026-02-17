@@ -7,6 +7,9 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const Incidents = React.lazy(() => import('./pages/Incidents'));
 const IncidentDetail = React.lazy(() => import('./pages/IncidentDetail'));
 const CreateIncident = React.lazy(() => import('./pages/CreateIncident'));
+const MyIncidents = React.lazy(() => import('./pages/MyIncidents'));
+const Evidence = React.lazy(() => import('./pages/Evidence'));
+const Profile = React.lazy(() => import('./pages/Profile'));
 const PublicReport = React.lazy(() => import('./pages/PublicReport'));
 const PublicStatus = React.lazy(() => import('./pages/PublicStatus'));
 const Analytics = React.lazy(() => import('./pages/Analytics'));
@@ -54,6 +57,9 @@ function AppRoutes() {
           <Route path="/incidents" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
           <Route path="/incidents/new" element={<ProtectedRoute><CreateIncident /></ProtectedRoute>} />
           <Route path="/incidents/:id" element={<ProtectedRoute><IncidentDetail /></ProtectedRoute>} />
+          <Route path="/my-incidents" element={<ProtectedRoute><MyIncidents /></ProtectedRoute>} />
+          <Route path="/evidence" element={<ProtectedRoute><Evidence /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
           {/* Role-specific routes */}
           <Route
