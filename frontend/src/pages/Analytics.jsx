@@ -50,7 +50,7 @@ export default function Analytics() {
 
   return (
     <Layout>
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <Shield size={32} style={{ color: '#3b82f6' }} />
           <div>
@@ -58,6 +58,16 @@ export default function Analytics() {
             <p style={{ color: '#64748b' }}>Comprehensive analysis of JKUAT campus safety and response efficiency</p>
           </div>
         </div>
+        <button
+          onClick={() => {
+            const token = localStorage.getItem('token');
+            window.location.href = `${import.meta.env.VITE_API_URL}/incidents/export_incidents/?token=${token}`;
+          }}
+          className="btn-secondary"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <TrendingUp size={16} /> Export Data (CSV)
+        </button>
       </div>
 
       <div className="stats-grid">
@@ -149,7 +159,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '25px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '25px', marginBottom: '25px' }}>
         <div className="card">
           <h2><MapPin size={18} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Building Hotspots</h2>
           <ResponsiveContainer width="100%" height={250}>
@@ -164,20 +174,24 @@ export default function Analytics() {
         </div>
 
         <div className="card">
-          <h2><Clock size={18} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Hourly Peak Periods</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={hourData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis dataKey="name" fontSize={9} tickLine={false} axisLine={false} interval={3} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#3b82f6" radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <h2><TrendingUp size={18} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Officer Performance</h2>
+          <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '15px' }}>Resolved cases by personnel</p>
+          {advanced?.officer_performance?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={advanced.officer_performance}>
+                <XAxis dataKey="assigned_to__full_name" fontSize={9} axisLine={false} tickLine={false} />
+                <Tooltip />
+                <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} barSize={30} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ textAlign: 'center', color: '#64748b', padding: '40px 0' }}>No resolution data yet</div>
+          )}
         </div>
 
         <div className="card">
           <h2>Severity Distribution</h2>
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
                 data={severityData}
@@ -194,6 +208,39 @@ export default function Analytics() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2><Clock size={18} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Resolution Efficiency by Category</h2>
+        <div style={{ overflowX: 'auto', marginTop: '15px' }}>
+          <table className="incidents-table">
+            <thead>
+              <tr>
+                <th>Incident Type</th>
+                <th>Avg. Resolution Time</th>
+                <th>Performance Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {advanced?.type_efficiency?.map((item, idx) => (
+                <tr key={idx}>
+                  <td style={{ fontWeight: '500' }}>{item.type.replace('_', ' ').toUpperCase()}</td>
+                  <td>{item.avg_hours} hours</td>
+                  <td>
+                    <span className={`status-badge ${item.avg_hours < 24 ? 'status-resolved' : item.avg_hours < 48 ? 'status-assigned' : 'status-pending'}`}>
+                      {item.avg_hours < 24 ? 'Exemplary' : item.avg_hours < 48 ? 'Target Met' : 'Needs Review'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {(!advanced?.type_efficiency || advanced.type_efficiency.length === 0) && (
+                <tr>
+                  <td colSpan="3" style={{ textAlign: 'center', color: '#64748b' }}>Awaiting sufficient resolution data for analysis</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </Layout>

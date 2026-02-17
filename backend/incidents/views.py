@@ -14,6 +14,8 @@ from .serializers import (
     PublicReportSerializer, PublicReportStatusSerializer,
     AuditLogSerializer
 )
+import csv
+from django.http import HttpResponse
 
 
 class IncidentViewSet(viewsets.ModelViewSet):
@@ -294,18 +296,65 @@ class IncidentViewSet(viewsets.ModelViewSet):
         if avg_resolution:
             avg_res_hours = round(avg_resolution.total_seconds() / 3600, 1)
 
+        # Officer Performance (Resolved counts per officer)
+        officer_performance = resolved_incidents.values('assigned_to__full_name')\
+            .annotate(count=Count('id'))\
+            .order_by('-count')
+
+        # Efficiency by Category (Avg resolution time per incident type)
+        efficiency_by_type = resolved_incidents.annotate(duration=duration_expr)\
+            .values('incident_type')\
+            .annotate(avg_hours=Avg('duration'))
+        
+        type_efficiency = []
+        for entry in efficiency_by_type:
+            hours = entry['avg_hours'].total_seconds() / 3600 if entry['avg_hours'] else 0
+            type_efficiency.append({
+                'type': entry['incident_type'],
+                'avg_hours': round(hours, 1)
+            })
+
         result = {
             'trends': list(trends),
             'by_hour': [{'hour': k, 'count': v} for k, v in hour_stats.items()],
             'by_location': [{'location': entry['location_building'], 'count': entry['count']} for entry in by_location],
             'by_severity': {entry['severity']: entry['count'] for entry in by_severity},
             'avg_resolution_hours': avg_res_hours,
-            'resolved_count': resolved_incidents.count()
+            'resolved_count': resolved_incidents.count(),
+            'officer_performance': list(officer_performance),
+            'type_efficiency': type_efficiency
         }
         
         # Cache for 5 minutes
         cache.set(cache_key, result, 300)
         return Response(result)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsSupervisorUser])
+    def export_incidents(self, request):
+        """Export incidents as CSV"""
+        queryset = self.get_queryset()
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="incidents_export.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Ref Number', 'Title', 'Type', 'Status', 'Severity', 'Location', 'Reported By', 'Assigned To', 'Created At', 'Resolved At'])
+        
+        for incident in queryset:
+            writer.writerow([
+                incident.reference_number,
+                incident.title,
+                incident.incident_type,
+                incident.status,
+                incident.severity,
+                f"{incident.location_building} - {incident.location_floor}",
+                incident.reported_by.full_name if incident.reported_by else 'System/Public',
+                incident.assigned_to.full_name if incident.assigned_to else 'Unassigned',
+                incident.created_at.strftime('%Y-%m-%d %H:%M'),
+                incident.resolved_at.strftime('%Y-%m-%d %H:%M') if incident.resolved_at else ''
+            ])
+        
+        return response
 
     @action(detail=False, methods=['get'])
     def dashboard_stats(self, request):

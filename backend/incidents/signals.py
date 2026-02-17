@@ -20,11 +20,17 @@ def capture_previous_state(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Incident)
 @receiver(post_save, sender=User)
+@receiver(post_save, sender=IncidentNote)
+@receiver(post_save, sender=Evidence)
 def log_save(sender, instance, created, **kwargs):
     action = 'create' if created else 'update'
     user = get_current_user()
     ip = get_current_ip()
     
+    # Custom action name for uploads
+    if sender == Evidence and created:
+        action = 'upload'
+
     # Don't log if we can't identify the user (optional, depending on requirements)
     # if not user or user.is_anonymous:
     #     return

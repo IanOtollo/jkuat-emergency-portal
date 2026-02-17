@@ -84,9 +84,16 @@ class IncidentNote(models.Model):
         return f"Note on {self.incident.reference_number}"
 
 
+from django.core.exceptions import ValidationError
+
+def validate_file_size(value):
+    filesize = value.size
+    if filesize > 10 * 1024 * 1024:  # 10MB
+        raise ValidationError("Maximum file size is 10MB")
+
 class Evidence(models.Model):
     incident = models.ForeignKey(Incident, on_delete=models.CASCADE, related_name='evidence')
-    file = models.FileField(upload_to='evidence/%Y/%m/%d/')
+    file = models.FileField(upload_to='evidence/%Y/%m/%d/', validators=[validate_file_size])
     file_type = models.CharField(max_length=10)
     file_size = models.IntegerField()
     description = models.CharField(max_length=255, blank=True)
