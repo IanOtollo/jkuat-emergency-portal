@@ -449,10 +449,16 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by query params
         user_id = self.request.query_params.get('user', None)
         action = self.request.query_params.get('action', None)
+        entity_type = self.request.query_params.get('entity_type', None)
+        entity_id = self.request.query_params.get('entity_id', None)
         
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         if action:
             queryset = queryset.filter(action=action)
+        if entity_type:
+            queryset = queryset.filter(entity_type=entity_type)
+        if entity_id:
+            queryset = queryset.filter(entity_id=entity_id)
         
         return queryset.select_related('user')

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { incidentsAPI, usersAPI } from '../api/client';
 import Layout from '../components/Layout';
-import { Upload, MessageSquare } from 'lucide-react';
+import { Upload, MessageSquare, History, FileText, Printer } from 'lucide-react';
 
 export default function IncidentDetail() {
   const { id } = useParams();
@@ -19,6 +19,12 @@ export default function IncidentDetail() {
   const { data: incident, isLoading } = useQuery({
     queryKey: ['incident', id],
     queryFn: () => incidentsAPI.get(id).then(res => res.data),
+  });
+
+  const { data: history } = useQuery({
+    queryKey: ['incident-history', id],
+    queryFn: () => incidentsAPI.getAuditLogs({ entity_id: id, entity_type: 'incident' }).then(res => res.data),
+    enabled: !!incident,
   });
 
   const { data: guards } = useQuery({
@@ -120,16 +126,23 @@ export default function IncidentDetail() {
           <p style={{ color: '#64748b' }}>{incident.reference_number}</p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            className="btn btn-secondary no-print"
+            onClick={() => window.print()}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <Printer size={16} /> Print Report (PDF)
+          </button>
           {incident.status !== 'closed' && (incident.assigned_to?.id === user?.id || ['supervisor', 'head', 'admin'].includes(user?.role)) && (
             <button
-              className="btn btn-danger"
+              className="btn btn-danger no-print"
               onClick={() => setShowCloseModal(true)}
             >
               Close Incident
             </button>
           )}
           <button
-            className="btn btn-secondary"
+            className="btn btn-secondary no-print"
             onClick={() => {
               setEditMode(!editMode);
               setEditData({
@@ -329,6 +342,34 @@ export default function IncidentDetail() {
                 ))
               ) : (
                 <p style={{ color: '#64748b', marginTop: '20px' }}>No notes yet</p>
+              )}
+            </div>
+          </div>
+
+          <div className="card no-print">
+            <h2><History size={18} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Modification History</h2>
+            <div className="notes-list" style={{ marginTop: '15px' }}>
+              {history && history.length > 0 ? (
+                history.map((log) => (
+                  <div key={log.id} className="note-item" style={{ fontSize: '13px' }}>
+                    <div className="note-header">
+                      <span><strong>{log.user_name || 'System'}</strong>: {log.action.toUpperCase()}</span>
+                      <span>{new Date(log.created_at).toLocaleString()}</span>
+                    </div>
+                    <p>{log.description}</p>
+                    {log.changes && (
+                      <div style={{ marginTop: '8px', padding: '8px', background: '#f8fafc', borderRadius: '4px', fontSize: '11px' }}>
+                        {Object.entries(log.changes).map(([field, change]) => (
+                          <div key={field}>
+                            <strong>{field}:</strong> {change.old} → {change.new}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p style={{ color: '#64748b' }}>No modification history available</p>
               )}
             </div>
           </div>

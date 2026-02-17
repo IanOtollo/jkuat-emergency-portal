@@ -6,9 +6,9 @@ import { AlertTriangle, CheckCircle, Copy, Check } from 'lucide-react';
 
 export default function PublicReport() {
   const navigate = useNavigate();
+  const [showOptional, setShowOptional] = useState(false);
   const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({
-    // ... (lines 10-18 remain same)
     incident_type: 'theft',
     description: '',
     location_building: '',
@@ -152,62 +152,78 @@ export default function PublicReport() {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="location_floor">Floor/Room</label>
-            <input
-              id="location_floor"
-              type="text"
-              value={formData.location_floor}
-              onChange={(e) => setFormData({ ...formData, location_floor: e.target.value })}
-              placeholder="e.g., Floor 2, Room 204"
-            />
+          <div style={{ marginBottom: '20px' }}>
+            <button
+              type="button"
+              onClick={() => setShowOptional(!showOptional)}
+              className="btn btn-secondary"
+              style={{ width: '100%', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+              <span>{showOptional ? 'Hide' : 'Add'} Additional Details (Optional)</span>
+              <span>{showOptional ? '▲' : '▼'}</span>
+            </button>
           </div>
 
-          <div className="form-group">
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <input
-                type="checkbox"
-                checked={formData.is_anonymous}
-                onChange={(e) => setFormData({ ...formData, is_anonymous: e.target.checked })}
-                aria-label="Report Anonymously"
-                style={{ width: 'auto' }}
-              />
-              Report Anonymously
-            </label>
-          </div>
-
-          {!formData.is_anonymous && (
-            <>
+          {showOptional && (
+            <div className="animate-fade-in" style={{ padding: '20px', background: '#f8fafc', borderRadius: '8px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
               <div className="form-group">
-                <label htmlFor="reporter_name">Your Name</label>
+                <label htmlFor="location_floor">Floor/Room</label>
                 <input
-                  id="reporter_name"
+                  id="location_floor"
                   type="text"
-                  value={formData.reporter_name}
-                  onChange={(e) => setFormData({ ...formData, reporter_name: e.target.value })}
+                  value={formData.location_floor}
+                  onChange={(e) => setFormData({ ...formData, location_floor: e.target.value })}
+                  placeholder="e.g., Floor 2, Room 204"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="reporter_email">Email</label>
-                <input
-                  id="reporter_email"
-                  type="email"
-                  value={formData.reporter_email}
-                  onChange={(e) => setFormData({ ...formData, reporter_email: e.target.value })}
-                />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.is_anonymous}
+                    onChange={(e) => setFormData({ ...formData, is_anonymous: e.target.checked })}
+                    aria-label="Report Anonymously"
+                    style={{ width: 'auto' }}
+                  />
+                  Report Anonymously
+                </label>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="reporter_phone">Phone</label>
-                <input
-                  id="reporter_phone"
-                  type="tel"
-                  value={formData.reporter_phone}
-                  onChange={(e) => setFormData({ ...formData, reporter_phone: e.target.value })}
-                />
-              </div>
-            </>
+              {!formData.is_anonymous && (
+                <>
+                  <div className="form-group">
+                    <label htmlFor="reporter_name">Your Name</label>
+                    <input
+                      id="reporter_name"
+                      type="text"
+                      value={formData.reporter_name}
+                      onChange={(e) => setFormData({ ...formData, reporter_name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="reporter_email">Email</label>
+                    <input
+                      id="reporter_email"
+                      type="email"
+                      value={formData.reporter_email}
+                      onChange={(e) => setFormData({ ...formData, reporter_email: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="reporter_phone">Phone</label>
+                    <input
+                      id="reporter_phone"
+                      type="tel"
+                      value={formData.reporter_phone}
+                      onChange={(e) => setFormData({ ...formData, reporter_phone: e.target.value })}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={submitMutation.isPending}>
