@@ -109,7 +109,7 @@ export default function PublicReport() {
       </div>
 
       {/* Main Content Area */}
-      <div style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
+      <div className="public-portal-grid" style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
         {/* Main Form */}
         <div className="public-box" style={{ background: 'white', padding: '30px', borderRadius: '8px' }}>
           <h2 style={{ marginBottom: '10px', fontSize: '20px' }}>Report a Security Incident</h2>

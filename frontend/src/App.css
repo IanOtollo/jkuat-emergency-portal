@@ -366,6 +366,28 @@ body {
   .page-header h1 {
     font-size: 22px;
   }
+
+  /* Public Portal Mobile Fixes */
+  .public-container {
+    padding: 0 !important;
+  }
+
+  .public-container>div[style*="gridTemplateColumns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .public-container button {
+    font-size: 13px !important;
+    padding: 10px 20px !important;
+  }
+
+  .public-container h1 {
+    font-size: 20px !important;
+  }
+
+  .public-container h2 {
+    font-size: 18px !important;
+  }
 }
 
 .copy-button {
