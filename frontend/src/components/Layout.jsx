@@ -16,13 +16,13 @@ export default function Layout({ children }) {
     <div className="app-container">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h1>JKUAT Security</h1>
-          <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '5px' }}>
-            <User size={14} style={{ display: 'inline', marginRight: '5px' }} />
-            {user?.full_name}
+          <h1>JKUAT Emergency Incident Management System</h1>
+          <div style={{ fontSize: '13px', color: '#ecf0f1', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <User size={16} />
+            <span>{user?.full_name} ({user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1)})</span>
           </div>
-          <div style={{ fontSize: '11px', color: '#64748b' }}>
-            {user?.role?.toUpperCase()}
+          <div style={{ fontSize: '11px', color: '#95a5a6', marginTop: '3px', paddingLeft: '24px' }}>
+            [Logout]
           </div>
         </div>
 
@@ -35,15 +35,21 @@ export default function Layout({ children }) {
               </Link>
             </li>
             <li>
-              <Link to="/incidents" className={isActive('/incidents')}>
-                <FileText size={18} />
-                All Incidents
+              <Link to="/incidents/new" className={isActive('/incidents/new')}>
+                <Plus size={18} />
+                New Incident
               </Link>
             </li>
             <li>
-              <Link to="/incidents/new" className={isActive('/incidents/new')}>
-                <Plus size={18} />
-                Create Incident
+              <Link to="/my-incidents" className={isActive('/my-incidents')}>
+                <FileText size={18} />
+                My Incidents
+              </Link>
+            </li>
+            <li>
+              <Link to="/incidents" className={isActive('/incidents')}>
+                <FileText size={18} />
+                All Incidents
               </Link>
             </li>
             {canAccessAnalytics && (
@@ -54,9 +60,21 @@ export default function Layout({ children }) {
                 </Link>
               </li>
             )}
+            <li>
+              <Link to="/evidence" className={isActive('/evidence')}>
+                <FileText size={18} />
+                Evidence
+              </Link>
+            </li>
+            <li>
+              <Link to="/profile" className={isActive('/profile')}>
+                <User size={18} />
+                Profile
+              </Link>
+            </li>
             {canAccessUsers && (
               <li>
-                <div style={{ padding: '10px 15px', fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '10px' }}>
+                <div style={{ padding: '10px 15px', fontSize: '12px', color: '#95a5a6', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '10px' }}>
                   Administration
                 </div>
                 <Link to="/users" className={isActive('/users')}>
@@ -65,33 +83,34 @@ export default function Layout({ children }) {
                 </Link>
               </li>
             )}
-            <li style={{ marginTop: 'auto' }}>
-              <a
-                href="tel:0793824968"
-                className="emergency-link"
-                style={{
-                  color: '#ef4444',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 15px',
-                  borderRadius: '8px',
-                  border: '1px solid #fee2e2',
-                  backgroundColor: '#fef2f2'
-                }}
-              >
-                <div style={{ padding: '8px', backgroundColor: '#ef4444', borderRadius: '50%', color: 'white' }}>
-                  <LogOut size={16} style={{ transform: 'rotate(-90deg)' }} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '10px', textTransform: 'uppercase' }}>Emergency Call</div>
-                  <div style={{ fontSize: '14px' }}>0793824968</div>
-                </div>
-              </a>
-            </li>
           </ul>
         </nav>
+
+        <div style={{ position: 'absolute', bottom: '80px', width: 'calc(100% - 40px)' }}>
+          <a
+            href="tel:0800-JKUAT-1"
+            className="emergency-link"
+            style={{
+              color: '#e74c3c',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 15px',
+              borderRadius: '8px',
+              border: '2px solid #e74c3c',
+              backgroundColor: '#fef5e7',
+              textDecoration: 'none'
+            }}
+          >
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', flex: 1 }}>🚨 Emergency</div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '10px', color: '#e67e22' }}>Security Desk</div>
+              <div style={{ fontSize: '14px', fontWeight: 'bold' }}>0800-JKUAT-1</div>
+              <div style={{ fontSize: '9px', color: '#95a5a6' }}>24/7 Hotline</div>
+            </div>
+          </a>
+        </div>
 
         <div style={{ position: 'absolute', bottom: '20px', width: 'calc(100% - 40px)' }}>
           <button
@@ -103,11 +122,11 @@ export default function Layout({ children }) {
             Logout
           </button>
         </div>
-      </aside>
+      </aside >
 
       <main className="main-content">
         {children}
       </main>
-    </div>
+    </div >
   );
 }
