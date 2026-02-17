@@ -1,5 +1,9 @@
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AlertCircle, CheckCircle, Clock, FileText, User, Shield, Activity } from 'lucide-react';
+import { incidentsAPI } from '../api/client';
+import Layout from '../components/Layout';
+import { AlertCircle, CheckCircle, Clock, FileText } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
