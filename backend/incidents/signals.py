@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.forms.models import model_to_dict
-from .models import Incident, AuditLog
+from .models import Incident, IncidentNote, Evidence, AuditLog
 from django.contrib.auth import get_user_model
 from incident_system.middleware import get_current_user, get_current_ip
 
