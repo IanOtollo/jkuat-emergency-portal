@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -31,9 +31,15 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/', include('incidents.urls')),
     path('', TemplateView.as_view(template_name='index.html')),
-    path('<path:path>', TemplateView.as_view(template_name='index.html')),
+    # Catch-all route for SPA routing - must be last and exclude static assets
+    re_path(r'^(?!assets/)(?!static/).*$', TemplateView.as_view(template_name='index.html')),
 ]
 
+# Serve static files in production (WhiteNoise handles this automatically)
+# But we still need to configure media files
 if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    # In production, also serve media files
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

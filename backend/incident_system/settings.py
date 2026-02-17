@@ -135,13 +135,24 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# Use ManifestStaticFilesStorage for better compatibility with Vite
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
     BASE_DIR / '..' / 'frontend' / 'dist',
 ]
+
+# WhiteNoise configuration for serving Vite assets
+WHITENOISE_ROOT = BASE_DIR / '..' / 'frontend' / 'dist'
+WHITENOISE_INDEX_FILE = True
+WHITENOISE_MIMETYPES = {
+    '.js': 'application/javascript',
+    '.mjs': 'application/javascript',
+    '.css': 'text/css',
+}
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'
