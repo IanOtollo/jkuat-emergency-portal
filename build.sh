@@ -24,7 +24,18 @@ if command -v python3 &> /dev/null; then
 else
     PYTHON_CMD=python
 fi
-$PYTHON_CMD -m pip install -r requirements.txt
+
+# Detect pip command
+if command -v pip3 &> /dev/null; then
+    PIP_CMD="pip3"
+elif command -v pip &> /dev/null; then
+    PIP_CMD="pip"
+else
+    PIP_CMD="$PYTHON_CMD -m pip"
+fi
+
+echo "Using $PYTHON_CMD and $PIP_CMD"
+$PIP_CMD install -r requirements.txt
 
 # Create Static Files
 echo "Preparing Backend..."
