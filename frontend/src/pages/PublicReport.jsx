@@ -246,6 +246,27 @@ export default function PublicReport() {
               </div>
             )}
 
+            {/* Photo Evidence Upload Section */}
+            <div style={{ marginTop: '20px', marginBottom: '20px', padding: '25px', border: '2px dashed #3498db', borderRadius: '8px', background: '#f8f9fa', textAlign: 'center' }}>
+              <label htmlFor="evidence_upload" style={{ cursor: 'pointer', display: 'block' }}>
+                <div style={{ fontSize: '14px', color: '#3498db', marginBottom: '8px', fontWeight: '600' }}>
+                  📎 Upload photo evidence (JPEG, PNG, PDF - max 10MB)
+                </div>
+                <input
+                  id="evidence_upload"
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    console.log('File selected:', e.target.files[0]);
+                  }}
+                />
+                <div style={{ fontSize: '12px', color: '#7f8c8d' }}>
+                  Click to browse or drag and drop
+                </div>
+              </label>
+            </div>
+
             <button type="submit" className="btn btn-primary" style={{ width: '100%' }} disabled={submitMutation.isPending}>
               {submitMutation.isPending ? 'Submitting...' : 'Submit Report'}
             </button>
