@@ -390,6 +390,24 @@ body {
   }
 }
 
+/* Public Portal Grid */
+.public-portal-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+@media (max-width: 768px) {
+  .public-portal-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  .public-container .public-box {
+    padding: 20px !important;
+  }
+}
+
 .copy-button {
   display: inline-flex;
   align-items: center;
