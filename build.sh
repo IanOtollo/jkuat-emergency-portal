@@ -19,11 +19,16 @@ cd ..
 # Install Backend Dependencies
 echo "Installing Backend Dependencies..."
 cd backend
-python3 -m pip install -r requirements.txt
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD=python3
+else
+    PYTHON_CMD=python
+fi
+$PYTHON_CMD -m pip install -r requirements.txt
 
 # Create Static Files
 echo "Preparing Backend..."
 # We are already in the backend directory from the previous step
-python3 manage.py collectstatic --no-input
+$PYTHON_CMD manage.py collectstatic --no-input
 # We run migrations in the start command, but we can verify here if needed
 cd ..
